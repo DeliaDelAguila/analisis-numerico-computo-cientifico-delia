@@ -1,0 +1,87 @@
+---
+title: "Proyecto MNO - Ejecución"
+author: "Equipo 3"
+output: html_document
+---
+
+```{r}
+df=read.csv('./control.csv', header=T)
+
+head(df)
+
+
+
+
+```
+
+## Ejecución 
+
+tiempo: Cantidad de años de estudio hasta finalizar la educación básica
+
+39% de los datos cuenta con censura
+
+```{r}
+library(sqldf)
+
+dft <- sqldf("
+  select 
+    n_registro, masculino, g1, 
+    t1 + t2 + t3 + t4 + t5 + t6 + t7 + t_aux as tiempo, censura,
+    esp1, mat1, cie1, soc1,
+    esp2, mat2, cie2, soc2,
+    esp3, mat3, cie3, soc3,
+    esp4, mat4, cie4, soc4,
+    esp5, mat5, cie5, soc5,
+    esp6, mat6, cie6, soc6,
+    esp7, mat7, cie7, soc7
+  from
+    (select *, 1 as t1,
+      case when grado_c2 is null and (g3 is not null or g4 is not null or g5 is not null or g6 is not null or g7 is not null) then(1) 
+        when grado_c2 is not null then(1) else 0 end as t2,
+      case when grado_c3 is null and (g4 is not null or g5 is not null or g6 is not null or g7 is not null) then(1) 
+        when grado_c3 is not null then(1) else 0 end as t3,
+      case when grado_c4 is null and (g5 is not null or g6 is not null or g7 is not null) then(1) 
+        when grado_c4 is not null then(1) else 0 end as t4,
+      case when grado_c5 is null and (g6 is not null or g7 is not null) then(1) 
+        when grado_c5 is not null then(1) else 0 end as t5,
+      case when grado_c6 is null and (g7 is not null) then(1) 
+        when grado_c6 is not null then(1) else 0 end as t6,
+      case when grado_c7 is null and (g1!=9 and g2!=9 and g3!=9 and g4!=9 and g5!=9 and g6!=9) then(1) 
+        when grado_c7 is not null then(1) else 0 end as t7,
+      g1-1 as t_aux,
+      case when g1!=9 and (g2!=9 or g2 is null) and (g3!=9 or g3 is null) and (g4!=9 or g4 is null) 
+        and (g5!=9 or g5 is null) and (g6!=9 or g6 is null) and (g7!=9 or g7 is null) then (1) else 0 end as censura
+    from
+      (select *,
+      case when sexo='H' then (1) else 0 end as masculino, 
+      case when nciclo1='SECUNDARIA' then (grado_c1 + 6) else grado_c1 end as g1,
+      case when nciclo2='SECUNDARIA' then (grado_c2 + 6) else grado_c2 end as g2,
+      case when nciclo3='SECUNDARIA' then (grado_c3 + 6) else grado_c3 end as g3,
+      case when nciclo4='SECUNDARIA' then (grado_c4 + 6) else grado_c4 end as g4,
+      case when nciclo5='SECUNDARIA' then (grado_c5 + 6) else grado_c5 end as g5,
+      case when nciclo6='SECUNDARIA' then (grado_c6 + 6) else grado_c6 end as g6,
+      case when nciclo7='SECUNDARIA' then (grado_c7 + 6) else grado_c7 end as g7,
+      cesp_c1 as esp1, cesp_c2 as esp2, cesp_c3 as esp3, cesp_c4 as esp4, cesp_c5 as esp5, cesp_c6 as esp6, cesp_c7 as esp7,
+      cMAT_c1 as mat1, cMAT_c2 as mat2, cMAT_c3 as mat3, cMAT_c4 as mat4, cMAT_c5 as mat5, cMAT_c6 as mat6, cMAT_c7 as mat7,
+      case when nciclo1='SECUNDARIA' then(cCIE_c1) else cCNAT_c1 end as cie1,
+      case when nciclo1='SECUNDARIA' then(cCIE_c2) else cCNAT_c1 end as cie2,
+      case when nciclo1='SECUNDARIA' then(cCIE_c3) else cCNAT_c1 end as cie3,
+      case when nciclo1='SECUNDARIA' then(cCIE_c4) else cCNAT_c1 end as cie4,
+      case when nciclo1='SECUNDARIA' then(cCIE_c5) else cCNAT_c1 end as cie5,
+      case when nciclo1='SECUNDARIA' then(cCIE_c6) else cCNAT_c1 end as cie6,
+      case when nciclo1='SECUNDARIA' then(cCIE_c7) else cCNAT_c1 end as cie7,
+      case when nciclo1='SECUNDARIA' then(cSOC_c1) else cFCYE_c1 end as soc1,
+      case when nciclo1='SECUNDARIA' then(cSOC_c2) else cFCYE_c1 end as soc2,
+      case when nciclo1='SECUNDARIA' then(cSOC_c3) else cFCYE_c1 end as soc3,
+      case when nciclo1='SECUNDARIA' then(cSOC_c4) else cFCYE_c1 end as soc4,
+      case when nciclo1='SECUNDARIA' then(cSOC_c5) else cFCYE_c1 end as soc5,
+      case when nciclo1='SECUNDARIA' then(cSOC_c6) else cFCYE_c1 end as soc6,
+      case when nciclo1='SECUNDARIA' then(cSOC_c7) else cFCYE_c1 end as soc7
+      from df))
+  ")
+
+sqldf("select distinct censura, count(*)
+      from dft
+      group by censura")
+```
+

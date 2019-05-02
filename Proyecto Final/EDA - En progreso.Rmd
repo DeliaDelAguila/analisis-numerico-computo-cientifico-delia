@@ -1,0 +1,141 @@
+---
+title: "Proyecto MNO"
+author: "Equipo 3 "
+date: "29 de abril de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DataExplorer)
+library(ggplot2) #data visualization
+library(dplyr) #data manipulation
+library(ISLR) #for the dataset
+```
+
+## Análisis Exploratorio de los Datos.
+
+```{r}
+df=read.csv('./control.csv', header=T)
+
+```
+
+Se cuenta con una base de datos con 203,196 registros, que corresponde al registro de calificaciones de alumnos en primaria y secundaria a lo largo de 7 ciclos escolares consecutivos. Se tienen 65 variables
+1. n_registro=variable identificadora del registro
+2. sexo=sexo (masculino,femenino)
+3. nciclo1=nivel registrado en el ciclo 1 (primaria, secundaria)
+4. grado_c1=grado escolar registrado en el ciclo1
+5. cesp_c1=calificación en español en el ciclo1
+6. cMAT_c1=calificación en matemáticas en el ciclo1
+7. cCNAT_c1=calificación en ciencias naturales en el ciclo1
+8. cCIE_c1=calificación en ciencias en el ciclo1
+9. cSOC_c1=calificación en ciencias sociales en el ciclo1
+10. cFCYE_c1=calificación en formación civica y ética en el ciclo1
+11. cf_c1=calificación final del grado en el ciclo 1.
+
+Estos datos se repiten para cada ciclo y el ciclo se identifica por el número en que termina el nombre de la variable.
+```{r}
+head(df,5)
+
+install.packages("sqldf")
+library(sqldf)
+
+df$cf_c1
+
+
+
+```
+
+Primero se verifica que no existan datos duplicados
+
+```{r cars}
+nrow(df[duplicated(df), ])
+```
+Observaremos , una gran cantidad de NA's, sin embargo la explicación de este dato radica en que no en todos los ciclos escolares el alumno está registrado, ya sea porque terminó sus estudios o los interrumpió, a la vez para cada nivel se imparten materias diferentes, siendo en común para ambos niveles solo Español y Matemáticas, en primaria se imparte exclusivamente Ciencias Naturales y Formación Civica y Ética, mientras que en secundaria se tienen registros de Ciencias Sociales y Ciencias Exactas, esta última se refiere a Fisica y Quimica, por lo tanto alumnos inscritos en primaria tendran NA en las variables que se refieran a ciencias sociales y ciencias exactas, de forma análoga aquellos inscritos en secundaria tendran NA en las variables de formación civica y ética y ciencias naturales.
+```{r}
+glimpse(df)
+```
+
+**Variable sexo**
+Se verifica que la variable sexo no tenga dato faltante.
+
+```{r}
+summary(df$sexo)
+```
+
+**Variable nivel**
+Verificamos que en la variable que corresponde a nivel para cada ciclo, solo se contemple a primaria y secundaria
+
+```{r}
+vars_nivel<-c("nciclo1","nciclo2","nciclo3","nciclo4","nciclo5","nciclo6","nciclo7")
+summary(df[vars_nivel])
+```
+Observamos que hay campos en blanco, por lo que procedemos a convertirlos en NA, para mayor claridad en la base
+```{r}
+df$nciclo2[df$nciclo2==""]<-NA
+df$nciclo3[df$nciclo3==""]<-NA
+df$nciclo4[df$nciclo4==""]<-NA
+df$nciclo5[df$nciclo5==""]<-NA
+df$nciclo6[df$nciclo6==""]<-NA
+df$nciclo7[df$nciclo7==""]<-NA
+
+summary(df[vars_nivel])
+           
+```
+
+**Variable grado escolar**
+Se valida que el rango de grados en primaria sea de 1° a 6° grado en primaria y 1° a 3° en secundaria para los 7 ciclos escolares
+
+```{r}
+table (df$nciclo1,df$grado_c1)
+table (df$nciclo2,df$grado_c2)
+table (df$nciclo3,df$grado_c3)
+table (df$nciclo4,df$grado_c4)
+table (df$nciclo5,df$grado_c5)
+table (df$nciclo6,df$grado_c6)
+table (df$nciclo7,df$grado_c7)
+```
+
+Se valida que el rango de calificaciones sea consistente
+```{r}
+vars_cal<-c("cesp_c1", "cesp_c2", "cesp_c3", "cesp_c4", "cesp_c5", "cesp_c6", "cesp_c7","cMAT_c1", "cMAT_c2", "cMAT_c3", "cMAT_c4", "cMAT_c5", "cMAT_c6", "cMAT_c7","cSOC_c1", "cSOC_c2", "cSOC_c3", "cSOC_c4", "cSOC_c5", "cSOC_c6", "cSOC_c7","cCIE_c1", "cCIE_c2", "cCIE_c3", "cCIE_c4", "cCIE_c5", "cCIE_c6", "cCIE_c7","cFCYE_c1", "cFCYE_c2", "cFCYE_c3", "cFCYE_c4", "cFCYE_c5", "cFCYE_c6", "cFCYE_c7","cCNAT_c1", "cCNAT_c2", "cCNAT_c3", "cCNAT_c4", "cCNAT_c5", "cCNAT_c6", "cCNAT_c7")
+
+summary(df[vars_cal])
+```
+
+Observamos la relación entre calificaciones de matemáticas y españolcon respecto a la calificación final de grado desagregando por nivel escolar. (ciclo 1)
+
+* Español
+```{r}
+ggplot(df, aes(x = cesp_c1, y = cf_c1)) + 
+  geom_jitter() +
+  facet_wrap(~ nciclo1)
+```
+
+Se nota que existen calificaciones con **0** y una calificación final alta, por lo que se tiene que revisar estos registros ya que sugieren que hay registros con calificaciones finales pero sin calificaciones en las materias.
+
+
+*Matemáticas
+
+```{r}
+ggplot(df, aes(x = cMAT_c1, y = cf_c1)) + 
+  geom_jitter() +
+  facet_wrap(~ nciclo1)
+```
+Posteriormente observa la relación que existe entre calificaciones en español y matemáticas con respecto a la calificación final del grado. En donde se comprueba la relación entre calificaciones altas conducen a calificaciónes de grado aprobatorias.
+
+```{r}
+ggplot(df, aes(x = cesp_c1, y = cf_c1)) + 
+  geom_jitter() +
+  facet_wrap(~ cMAT_c1)
+```
+
+Se observa que en ambos sexos, la distribución de las calificaciones de matemáticas con respecto a la calificación final, es bastante similar. 
+
+```{r}
+ggplot(df, aes(x = cMAT_c1, y = cf_c1)) + 
+  geom_point() +
+  facet_wrap(~ sexo)
+```
+**Limpieza de base de datos**
+Aqui platicar si se borran estos datos o se queda así la base
